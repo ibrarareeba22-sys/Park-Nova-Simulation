@@ -1,26 +1,24 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Park Nova — IoT Parking Simulator</title>
+<title>Park Nova </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
-
 <header class="topbar">
   <div class="brand">
     <div class="brand-mark">PN</div>
     <div class="brand-text">
-      <h1>Park Nova <span class="tag">IoT Parking Simulator</span></h1>
-      <p>Layout builder · Live simulation · Cost analysis (PKR)</p>
+      <h1>Park Nova <span class="tag"></span></h1>
+      <p>Live simulation · Cost analysis (PKR)</p>
     </div>
   </div>
   <div class="topbar-actions">
-    <!-- "SYSTEM STARTING" status pill hata diya gaya hai (user request) -->
+   <!-- SYSTEM STARTING -->
     <div class="duration-picker">
       <span>Park Duration</span>
       <select id="durationSelect">
@@ -30,32 +28,26 @@
         <option value="25">25 Sec</option>
       </select>
     </div>
-    <button id="btnStart" class="btn btn-accent">▶ Start Simulation</button>
-    <button id="btnSpawn" class="btn btn-ghost">🚗 Spawn Car</button>
-    <button id="btnReset" class="btn btn-ghost">↺ Reset State</button>
-    <button id="btnClear" class="btn btn-danger-ghost">🗑 Clear Layout</button>
+    <button id="btnStart" class="btn btn-accent"> Start Simulation</button>
+    <button id="btnSpawn" class="btn btn-ghost"> Generate Car</button>
+    <button id="btnReset" class="btn btn-ghost"> Reset State</button>
+    <button id="btnClear" class="btn btn-danger-ghost"> Clear Layout</button>
   </div>
 </header>
-
 <main class="layout">
-
   <!-- LEFT: component library -->
   <aside class="panel lib">
-    <h2>Component Library</h2>
-    <p class="hint">Click + to add a device. Select a Parking Slot on the canvas to resize it (drag its corner handle, or use the Slot Size box on the right).</p>
+    <h2> Components </h2>
     <div id="libList" class="lib-list"></div>
   </aside>
-
   <!-- CENTER: canvas -->
   <section class="canvas-wrap">
     <div id="canvas" class="canvas"></div>
   </section>
-
   <!-- RIGHT: cost analysis -->
   <aside class="panel side">
-
     <div class="card slot-size-card" id="slotSizeCard" style="display:none;">
-      <h2>📐 Slot Size</h2>
+      <h2> Slot Size</h2>
       <p class="card-sub">Selected slot: <b id="slotSizeName">—</b></p>
       <div class="slot-size-controls">
         <label>Width (px)
@@ -65,18 +57,15 @@
           <input type="number" id="slotHeightInput" min="30" max="400" step="2">
         </label>
       </div>
-      <p class="card-sub" style="margin-top:8px;">Tip: you can also drag the small square on the slot's corner directly on the canvas.</p>
     </div>
-
     <div class="card status-card">
-      <h2>📊 Live Parking Status</h2>
+      <h2> Live Parking Status</h2>
       <p class="card-sub">Live count across your placed slots</p>
       <div class="status-row-grid" id="statusRowGrid"></div>
     </div>
-
     <div class="card cost-card">
-      <h2>💰 Cost &amp; Budget Analysis</h2>
-      <p class="card-sub">Estimated setup cost, in PKR</p>
+      <h2> Cost &amp; Budget Analysis</h2>
+      <p class="card-sub">Estimated setup cost in PKR</p>
       <div class="total-box">
         <span>Total Investment</span>
         <strong id="totalCost">Rs 0</strong>
@@ -84,12 +73,8 @@
       </div>
       <div class="stat-grid" id="statGrid"></div>
     </div>
-
   </aside>
-
 </main>
-
 <script src="script.js"></script>
-
 </body>
 </html>

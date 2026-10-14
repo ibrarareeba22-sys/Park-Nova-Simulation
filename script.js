@@ -1,13 +1,9 @@
-/* =====================================================================
-   Park Nova — IoT Parking Simulator
-   script.js — vanilla JS, no frameworks. Pairs with index.html + style.css.
-   ===================================================================== */
-
-/* ---------- 1. Component catalogue (edit prices here anytime) ---------- */
+/* Park Nova — IoT Parking Simulator */
+/*  1. Component catalogue  */
 const COMPONENTS = [
   { type:'slot',        name:'Parking Slot',       desc:'One marked space for a car',     price:2500,   icon:'🅿️', w:78,  h:88,  group:'slots' },
-  { type:'entry-gate',  name:'Entry Gate',         desc:'Opens for cars coming in',        price:95000,  icon:'🛬', w:120, h:60,  group:'gates' },
-  { type:'exit-gate',   name:'Exit Gate',          desc:'Opens for cars going out',        price:120000, icon:'🛫', w:120, h:60,  group:'gates' },
+  { type:'entry-gate',  name:'Entry Gate',         desc:'Opens for cars coming in',        price:95000,  icon:'🚗', w:120, h:60,  group:'gates' },
+  { type:'exit-gate',   name:'Exit Gate',          desc:'Opens for cars going out',        price:120000, icon:'🚗', w:120, h:60,  group:'gates' },
   { type:'sensor',      name:'Parking Sensor',     desc:'Detects if a car is parked',      price:250,    icon:'📡', w:46,  h:46,  group:'sensors' },
   { type:'camera',      name:'Number Plate Camera', desc:'Reads the car\'s number plate',   price:59500,  icon:'📸', w:50,  h:50,  group:'cameras' },
   { type:'lcd',         name:'Display Screen',     desc:'Shows slot status live',          price:350,    icon:'📟', w:90,  h:54,  group:'lcds' },
@@ -19,24 +15,19 @@ const COMPONENTS = [
 /* runtime state */
 const canvas   = document.getElementById('canvas');
 const logList  = document.getElementById('logList');
-let placed     = [];      // {id, type, price, label, x, y, w, h, status, el}
+let placed     = [];     
 let counter    = 0;
 let selectedId = null;
 let simTimer   = null;
 let simRunning = false;
-let lastEvent  = null;    // {slotLabel, status} — most recent slot change, drives the LCDs
+let lastEvent  = null;    
 
-/* entry queue — cars wait in line, one at a time walks from entry gate to its slot */
+/* entry queue  */
 let spawnQueue = [];
 let entryBusy  = false;
 
-/* NEW: simulation "epoch" — Reset/Clear increments this. Every pending setTimeout
-   inside a car's journey checks the epoch before acting; agar Reset/Clear ho chuka
-   hai to purana pending step khud-ba-khud cancel ho jata hai aur state ko overwrite
-   nahi karta. Ye hi Reset State ke "kaam na karne" wale bug ki asal wajah thi. */
 let simEpoch = 0;
 
-/* Pakistani-style number plate generator, e.g. LEA-4521, ICT-0892 */
 const PLATE_PREFIXES = ['LEA','LEB','LED','LEF','LEZ','ICT','KHI','RIA','PES','GUJ'];
 function generatePlate(){
   const prefix = PLATE_PREFIXES[Math.floor(Math.random()*PLATE_PREFIXES.length)];
@@ -44,7 +35,7 @@ function generatePlate(){
   return `${prefix}-${digits}`;
 }
 
-/* ---------- 2. Build the library sidebar ---------- */
+/*2. Build the library sidebar */
 const libList = document.getElementById('libList');
 COMPONENTS.forEach(c => {
   const row = document.createElement('div');
@@ -61,7 +52,7 @@ COMPONENTS.forEach(c => {
   libList.appendChild(row);
 });
 
-/* ---------- 3. Adding a component to the canvas ---------- */
+/* 3. Adding a component to the canvas */
 function addComponent(type, x, y){
   const def = COMPONENTS.find(c => c.type === type);
   if(!def) return;
@@ -103,7 +94,6 @@ function addComponent(type, x, y){
   makeDraggable(el, item);
   el.querySelector('.p-del')?.addEventListener('click', (e)=>{ e.stopPropagation(); removeItem(item.id); });
 
-  // NEW: sirf Parking Slot ke liye ek resize handle wire karo (bottom-right corner square)
   if(type === 'slot'){
     const handle = el.querySelector('.resize-handle');
     if(handle) makeResizable(handle, item);
@@ -130,8 +120,6 @@ function buildInnerHTML(item, def){
   } else if(item.type === 'entry-gate' || item.type === 'exit-gate'){
     statusHTML = `<span class="p-status">READY</span>`;
   }
-  // resize-handle sirf slot type ke liye chahiye, magar isko yahan bina harm sabke liye
-  // add kar sakte hain kyunke CSS ise sirf .placed.slot.selected par hi dikhata hai.
   const resizeHandleHTML = (item.type === 'slot') ? `<div class="resize-handle" title="Drag to resize"></div>` : '';
   return `
     <button class="p-del">×</button>
@@ -154,13 +142,11 @@ function removeItem(id){
   log(`Removed <b>${item.label}</b>.`);
 }
 
-/* ---------- 4. Drag to move + click to select ---------- */
+/* 4. Drag to move + click to select */
 function makeDraggable(el, item){
   let dragging = false, startX=0, startY=0, origX=0, origY=0, moved=false;
 
   el.addEventListener('pointerdown', (e)=>{
-    // FIX: agar click delete (×) button ya resize handle par hua hai to
-    // is listener ko kuch bhi na karne dein — unke apne handlers chalne dein.
     if(e.target.closest('.p-del') || e.target.closest('.resize-handle')) return;
 
     dragging = true; moved = false;
@@ -185,7 +171,7 @@ function makeDraggable(el, item){
   });
 }
 
-/* ---------- 5. Component selection (highlight + slot-size panel) ---------- */
+/* 5. Component selection (highlight + slot-size panel) */
 function showSlotSizeCard(item){
   const sizeCard = document.getElementById('slotSizeCard');
   if(!sizeCard) return;
@@ -224,17 +210,15 @@ canvas.addEventListener('pointerdown', (e)=>{
   }
 });
 
-/* ---------- 5b. Slot width/height resize ---------- */
+/* Slot width/height resize */
 function resizeItem(id, w, h){
   const item = placed.find(p=>p.id===id);
   if(!item) return;
-  // safe minimum/maximum taake element ghayab ya screen se bahar na chala jaye
   item.w = Math.max(30, Math.min(400, Math.round(w)));
   item.h = Math.max(30, Math.min(400, Math.round(h)));
   item.el.style.width  = item.w+'px';
   item.el.style.height = item.h+'px';
 
-  // agar yehi item abhi select hai to sidebar ke number-inputs bhi live sync karein
   if(selectedId === id){
     const wInput = document.getElementById('slotWidthInput');
     const hInput = document.getElementById('slotHeightInput');
@@ -243,18 +227,15 @@ function resizeItem(id, w, h){
   }
 }
 
-/* NEW: canvas par slot ke corner wale chhote square ko drag karke resize karna —
-   ye sidebar inputs se bilkul independent tareeqa hai, isliye zyada reliable hai. */
 function makeResizable(handle, item){
   handle.addEventListener('pointerdown', (e)=>{
-    e.stopPropagation(); // taake ye event slot ko "move-drag" mode mein na le jaye
+    e.stopPropagation(); 
     e.preventDefault();
 
     const startX = e.clientX, startY = e.clientY;
     const startW = item.w, startH = item.h;
     handle.setPointerCapture(e.pointerId);
 
-    // select bhi kar dein taake sidebar card turant dikh jaye
     selectItem(item.id);
 
     function onMove(ev){
@@ -272,7 +253,6 @@ function makeResizable(handle, item){
   });
 }
 
-/* Sidebar ke number-inputs se bhi resize kar sakein (typing ke zariye exact px) */
 document.getElementById('slotWidthInput')?.addEventListener('input', (e)=>{
   if(!selectedId) return;
   const item = placed.find(p=>p.id===selectedId);
@@ -289,7 +269,7 @@ document.getElementById('slotHeightInput')?.addEventListener('input', (e)=>{
   if(!isNaN(val)) resizeItem(selectedId, item.w, val);
 });
 
-/* ---------- 6. Cost & Budget panel (CBA) ---------- */
+/* 6. Cost & Budget panel (CBA) */
 const GROUP_LABELS = { slots:'Slots', gates:'Gates', sensors:'Sensors', cameras:'ANPR Cams', lcds:'LCDs', servos:'Servos', controllers:'Controllers', payment:'Payment' };
 
 function updateCostPanel(){
@@ -347,7 +327,7 @@ function refreshAllLCDs(){
   });
 }
 
-/* ---------- 7. Live telemetry log ---------- */
+/* 7. Live telemetry log */
 function log(msg){
   if(!logList) return;
   const time = new Date().toLocaleTimeString();
@@ -358,15 +338,13 @@ function log(msg){
   while(logList.children.length > 40) logList.removeChild(logList.lastChild);
 }
 
-/* ---------- 8. Simulation ---------- */
-/* briefly flash a component (camera/sensor) so a "detecting" pulse is visible */
+/* 8. Simulation */
 function flashDetect(item, ms=900){
   if(!item) return;
   item.el.classList.add('detecting');
   setTimeout(()=> item.el.classList.remove('detecting'), ms);
 }
 
-/* pick the sensor/camera physically nearest a slot, so feedback lands on the right device */
 function nearestOfType(type, target){
   const candidates = placed.filter(p=>p.type===type);
   if(!candidates.length) return null;
@@ -377,11 +355,9 @@ function nearestOfType(type, target){
   });
 }
 
-/* Drives the car through the road lane instead of cutting diagonally across the
-   layout: down/up into the lane, along the lane to the target's x, then in to park. */
 function driveAlongLane(car, targetX, targetY, onDone){
-  const laneY = 465; // fixed row the car drives through instead of teleporting diagonally
-  const hop = 550;   // ms per hop
+  const laneY = 465;  
+  const hop = 550;   
   car.style.transition = `left ${hop}ms linear, top ${hop}ms linear`;
 
   car.style.top = laneY + 'px';
@@ -397,8 +373,6 @@ function driveAlongLane(car, targetX, targetY, onDone){
   }, hop);
 }
 
-/* Public entry point — sirf queue mein daalta hai, turant journey shuru nahi karta.
-   Isi wajah se ek waqt mein sirf ek hi car entry gate se slot ki taraf move karti hai. */
 function spawnCar(){
   spawnQueue.push(true);
   log(`🧾 Car added to queue. (Queue: ${spawnQueue.length})`);
@@ -413,8 +387,6 @@ function processSpawnQueue(){
   runSpawn(simEpoch);
 }
 
-/* Asal spawn logic. `startEpoch` capture kiya jata hai taake Reset/Clear ke baad
-   ye purani car apne pending steps mein state ko overwrite na kar sake. */
 function runSpawn(startEpoch){
   const entry  = placed.find(p=>p.type==='entry-gate');
   const exit   = placed.find(p=>p.type==='exit-gate');
@@ -457,7 +429,7 @@ function runSpawn(startEpoch){
   log(`📷 ANPR Camera detected plate <b>${plate}</b> at Entry Gate.`);
 
   setTimeout(()=>{
-    if(startEpoch !== simEpoch){ car.remove(); return; } // Reset/Clear ho chuka — yahin ruk jao
+    if(startEpoch !== simEpoch){ car.remove(); return; } 
 
     log(`🔎 Plate ${plate} recognized → assigned to ${freeSlot.label} for ${durationLabel}. Barrier opening.`);
     if(entryBadge){ entryBadge.textContent = 'READY'; entryBadge.className = 'p-status'; }
@@ -479,7 +451,6 @@ function runSpawn(startEpoch){
 
       startCarCountdown(car, plate, durationSeconds, freeSlot);
 
-      // is car ne apni slot pakad li — ab entry lane free hai, agli car ko release karo
       entryBusy = false;
       processSpawnQueue();
 
@@ -539,8 +510,6 @@ function runSpawn(startEpoch){
     });
   }, 700);
 }
-
-/* Live mm:ss countdown shown above the parked car — turns red in the last 3 seconds. */
 function startCarCountdown(car, plate, totalSeconds, slotItem){
   let remaining = totalSeconds;
   const carBadge = document.getElementById(`timer-${plate}`);
@@ -586,8 +555,6 @@ document.getElementById('btnStart').addEventListener('click', (e)=>{
 });
 
 document.getElementById('btnReset').addEventListener('click', ()=>{
-  // FIX: epoch badhane se koi bhi purani "in-flight" car ka pending setTimeout
-  // ab kuch nahi karega — is se slots turant aur permanently free rehte hain.
   simEpoch++;
 
   clearInterval(simTimer); simRunning = false;
@@ -603,7 +570,6 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
     if(timerEl){ timerEl.textContent=''; timerEl.classList.remove('showing','ending'); }
   });
 
-  // gates ko bhi READY par wapas le aayein
   placed.filter(p=>p.type==='entry-gate' || p.type==='exit-gate').forEach(p=>{
     const badge = p.el.querySelector('.p-status');
     if(badge){ badge.textContent='READY'; badge.className='p-status'; }
@@ -618,7 +584,7 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
 });
 
 document.getElementById('btnClear').addEventListener('click', ()=>{
-  simEpoch++; // yahan bhi cancel karo taake koi bhi purani journey ke callbacks harm na karein
+  simEpoch++; 
 
   clearInterval(simTimer); simRunning = false;
   document.getElementById('btnStart').textContent = '▶ Start Simulation';
@@ -634,7 +600,7 @@ document.getElementById('btnClear').addEventListener('click', ()=>{
   log('🗑 Layout cleared.');
 });
 
-/* ---------- 9. Starter demo layout (so the page is never empty) ---------- */
+/* 9. Starter demo layout */
 function initDemo(){
   addComponent('entry-gate', 60, 40);
   addComponent('exit-gate', 1180, 40);
